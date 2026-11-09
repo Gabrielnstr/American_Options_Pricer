@@ -28,3 +28,15 @@ class LCG:
             out[i] = (x + 0.5) / m
         self.state = x # keep the state so successive calls continue the sequence
         return out
+
+    def normal(self, n):
+        """Return n standard normal variates using the Box-Muller transform."""
+        half = (n + 1) // 2 # number of (U1, U2) pairs needed
+        u = self.uniform(2 * half)
+        u1, u2 = u[:half], u[half:]
+
+        r = np.sqrt(-2.0 * np.log(u1))
+        theta = 2.0 * np.pi * u2
+        z = np.concatenate([r * np.cos(theta), r * np.sin(theta)])
+
+        return z[:n] # drop the extra value if n is odd
