@@ -1,6 +1,7 @@
 """Analysis helpers: American vs European comparison"""
 
 import pandas as pd
+import numpy as np
 
 from src.rng import LCG
 from src.european import bs_price
@@ -30,4 +31,21 @@ def compare_american_european(S0, strikes, r, q, sigma, T, n_steps, n_paths, see
                 "premium": amer["price"] - eur,
                 "premium_pct": 100 * (amer["price"] - eur) / eur,
             })
+    return pd.DataFrame(rows)
+
+def convergence_study(S0, K, r, q, sigma, T, n_steps, n_grid, n_rep=10, option="put", degree=2, itm_only=True, base_seed=1000):
+    """Study how the LSM confidence interval shrinks with the number of paths.
+
+    For each N in n_grid, the pricer is run n_rep times with different seeds.
+
+    Returns
+    -------
+    DataFrame with one row per (N, repetition): price, std_error, ci-low, ci-high.
+    """
+
+    rows = []
+    for N in n_grid:
+        for k in range(n_rep):
+            res = lsm_price(S0, K, r, q, sigma, T, n_steps, N, LCG(seed=base_seed + 100 * k + N % 97), option, degree=degree, itm_only=itm_only)
+            rows.append({"N": N, "rep": k, **res})
     return pd.DataFrame(rows)
